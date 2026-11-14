@@ -1,0 +1,136 @@
+<!doctype html><html lang="th"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>แผนผังระบบประเมินผลบุคลากร</title><style>body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f7fb;color:#17253b;margin:0;padding:32px}main{max-width:1500px;margin:auto}h1{color:#173b67}section{background:white;padding:24px;margin:24px 0;border-radius:16px;box-shadow:0 4px 20px #183a5b12;overflow:auto}h2{font-size:20px;margin:0 0 18px}.mermaid{min-width:760px;text-align:center}</style><main><h1>แผนผังการทำงานระบบประเมินผลบุคลากร</h1><section><h2>1. แผนผังการเข้าสู่ระบบ (Login Flow)</h2><pre class='mermaid'>flowchart TD
+    A([เริ่มต้น]) --&gt; B[เปิดหน้าเข้าสู่ระบบ]
+    B --&gt; C{มี token อยู่แล้วหรือไม่}
+    C -- มี --&gt; D[เปลี่ยนไปหน้า Dashboard]
+    C -- ไม่มี --&gt; E[กรอก Username และ Password]
+    E --&gt; F{ข้อมูลครบหรือไม่}
+    F -- ไม่ครบ --&gt; G[แจ้งให้กรอกข้อมูลให้ครบ]
+    G --&gt; E
+    F -- ครบ --&gt; H[ส่ง POST /api/auth/login]
+    H --&gt; I{พบผู้ใช้ในฐานข้อมูลหรือไม่}
+    I -- ไม่พบ --&gt; J[แจ้งว่าไม่พบชื่อผู้ใช้]
+    J --&gt; E
+    I -- พบ --&gt; K{รหัสผ่านถูกต้องหรือไม่}
+    K -- ไม่ถูกต้อง --&gt; L[แจ้งว่ารหัสผ่านไม่ถูกต้อง]
+    L --&gt; E
+    K -- ถูกต้อง --&gt; M[ออก JWT อายุ 7 วัน พร้อม role]
+    M --&gt; N[เก็บ token, role และ username ใน cookie]
+    N --&gt; O[โหลดข้อมูลโปรไฟล์]
+    O --&gt; P[ไปหน้า Dashboard และแสดงเมนูตาม role]
+    P --&gt; Q{ผู้ใช้เลือกออกจากระบบหรือไม่}
+    Q -- ไม่ --&gt; R[ใช้งานระบบ]
+    Q -- ใช่ --&gt; S[ล้าง cookie และข้อมูลโปรไฟล์]
+    S --&gt; B</pre></section>
+<section><h2>2. กระบวนการของงานบุคลากร / ผู้ดูแลระบบ (Admin)</h2><pre class='mermaid'>flowchart TD
+    A([Admin เข้าสู่ระบบ]) --&gt; B[Dashboard]
+    B --&gt; C[จัดการรอบการประเมิน]
+    C --&gt; D[กำหนดชื่อ ช่วงวัน และสถานะรอบ]
+    D --&gt; E[บันทึกรอบลงฐานข้อมูล]
+    B --&gt; F[จัดการเกณฑ์ KPI]
+    F --&gt; G[สร้างหรือแก้ไขเกณฑ์หลัก]
+    G --&gt; H[เพิ่มตัวชี้วัดย่อย / ระบุประเภทคะแนนหรือเอกสาร]
+    H --&gt; I[บันทึกเกณฑ์และข้อย่อย]
+    B --&gt; J[กำหนดเกณฑ์ตามตำแหน่งและบุคลากร]
+    J --&gt; K[เลือกบุคลากรและเกณฑ์ KPI]
+    K --&gt; L{เลือกอย่างน้อย 1 คนและ 1 เกณฑ์หรือไม่}
+    L -- ไม่ --&gt; M[แจ้งให้เลือกข้อมูลให้ครบ]
+    M --&gt; K
+    L -- ใช่ --&gt; N[บันทึกการผูก user กับ criteria]
+    N --&gt; O[ผู้รับการประเมินเห็นเกณฑ์ที่ได้รับมอบหมาย]
+    B --&gt; P[แก้ไขโปรไฟล์ของตนเอง]
+    O --&gt; Q([จบขั้นตอนเตรียมระบบ])</pre></section>
+<section><h2>3. กระบวนการของผู้รับการประเมิน (Staff / User)</h2><pre class='mermaid'>flowchart TD
+    A([ผู้รับการประเมินเข้าสู่ระบบ]) --&gt; B[Dashboard]
+    B --&gt; C[ตรวจสอบ / ปรับปรุงโปรไฟล์และตำแหน่ง]
+    B --&gt; D[เปิดแบบประเมินตนเอง]
+    D --&gt; E[โหลดรอบประเมิน เกณฑ์ที่ได้รับ และคะแนนเดิม]
+    E --&gt; F{พบรอบประเมินหรือไม่}
+    F -- ไม่พบ --&gt; G[แจ้งว่าไม่มีรอบที่เปิดใช้งาน]
+    F -- พบ --&gt; H{มีรายการประเมินของตนแล้วหรือไม่}
+    H -- ไม่มี --&gt; I[สร้างรายการประเมินสถานะกำลังประเมิน]
+    H -- มี --&gt; J[เปิดรายการเดิม]
+    I --&gt; K[กรอกคะแนนตนเองและข้อมูลหลักฐาน]
+    J --&gt; K
+    K --&gt; L{เลือกการทำงาน}
+    L -- บันทึกร่าง --&gt; M[บันทึกคะแนนและหลักฐาน]
+    M --&gt; K
+    L -- ส่งผลประเมิน --&gt; N[ยืนยันการส่ง]
+    N --&gt; O{ยืนยันหรือไม่}
+    O -- ไม่ --&gt; K
+    O -- ใช่ --&gt; P[บันทึกคะแนนและเปลี่ยนสถานะเป็น completed]
+    P --&gt; Q[แสดงว่าส่งผลประเมินแล้ว]
+    Q --&gt; R([สิ้นสุด])</pre></section>
+<section><h2>4. กระบวนการของกรรมการผู้ประเมิน (Assessor)</h2><pre class='mermaid'>flowchart TD
+    A([Assessor เข้าสู่ระบบ]) --&gt; B[Dashboard]
+    B --&gt; C[เปิดรายการประเมินบุคลากร]
+    C --&gt; D[โหลดรายการและตัวกรองสถานะ / ค้นหาชื่อ]
+    D --&gt; E{ต้องสร้างรายการประเมินใหม่หรือไม่}
+    E -- ใช่ --&gt; F[เลือกบุคลากร ตำแหน่ง และรอบ]
+    F --&gt; G{กรอกข้อมูลครบหรือไม่}
+    G -- ไม่ครบ --&gt; F
+    G -- ครบ --&gt; H[สร้างรายการสถานะกำลังประเมิน]
+    E -- ไม่ --&gt; I[เลือกรายการที่ต้องการตรวจ]
+    H --&gt; I
+    I --&gt; J[เปิดรายละเอียดและโหลดเกณฑ์กับคะแนน]
+    J --&gt; K[กรอกคะแนนผู้ประเมินและข้อเสนอแนะ]
+    K --&gt; L{บันทึกหรือส่งผลประเมิน}
+    L -- บันทึก --&gt; M[บันทึกคะแนนผู้ประเมิน]
+    M --&gt; K
+    L -- ส่งผล --&gt; N[บันทึกคะแนนและเปลี่ยนสถานะเป็น completed]
+    N --&gt; O[กลับไปดูรายการประเมิน]
+    O --&gt; P([สิ้นสุด])</pre></section>
+<section><h2>5. ภาพรวมระบบ (System Flow Overview)</h2><pre class='mermaid'>flowchart LR
+    subgraph U[ผู้ใช้งาน]
+      AD[Admin]
+      AS[Assessor]
+      ST[Staff / ผู้รับการประเมิน]
+    end
+
+    subgraph FE[Frontend: Nuxt]
+      LG[Login / Register]
+      DB[Dashboard และ Profile]
+      CFG[หน้าจัดการรอบ เกณฑ์ และมอบหมายเกณฑ์]
+      LIST[รายการประเมินบุคลากร]
+      SELF[แบบประเมินตนเอง]
+      DETAIL[รายละเอียดและให้คะแนนผู้ประเมิน]
+    end
+
+    subgraph API[Backend: Express REST API]
+      AUTH[Auth API: login / register]
+      PROF[Profile API]
+      EVAL[Evaluation API]
+      JWT[ตรวจสอบ JWT]
+    end
+
+    DBMS[(MySQL: users, profiles, periods, criteria, evaluations, scores, mappings)]
+
+    AD --&gt; LG
+    AS --&gt; LG
+    ST --&gt; LG
+    LG --&gt; AUTH
+    AUTH --&gt; DBMS
+    AUTH --&gt;|JWT + role| DB
+    DB --&gt; PROF
+    PROF --&gt; JWT
+    PROF --&gt; DBMS
+    AD --&gt; CFG
+    CFG --&gt; EVAL
+    AS --&gt; LIST
+    LIST --&gt; EVAL
+    ST --&gt; SELF
+    SELF --&gt; EVAL
+    AS --&gt; DETAIL
+    DETAIL --&gt; EVAL
+    EVAL --&gt; JWT
+    JWT --&gt; DBMS
+    DBMS --&gt;|ข้อมูลและผลลัพธ์| EVAL
+    EVAL --&gt;|JSON| CFG
+    EVAL --&gt;|JSON| LIST
+    EVAL --&gt;|JSON| SELF
+    EVAL --&gt;|JSON| DETAIL</pre></section>
+<section><h2>ขอบเขตที่ควรทราบ</h2><pre class='mermaid'>flowchart LR
+    A[Admin ตั้งรอบ + KPI] --&gt; B[มอบหมาย KPI ให้บุคลากร]
+    B --&gt; C[Staff ประเมินตนเอง]
+    C --&gt; D[บันทึกคะแนน / หลักฐาน]
+    D --&gt; E[Assessor ตรวจและให้คะแนน]
+    E --&gt; F[ส่งผลและปิดรายการ: completed]</pre></section></main><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';mermaid.initialize({startOnLoad:true,theme:'neutral',securityLevel:'loose'});</script></html>
